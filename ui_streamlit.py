@@ -77,3 +77,56 @@ if st.button("Charger les données"):
                     st.info("Pas de signaux détectés sur la période choisie.")
     except Exception as e:
         st.error(f"Erreur lors du chargement des données : {e}")
+import plotly.graph_objects as go
+
+st.subheader("Graphique en bougies")
+fig = go.Figure(data=[go.Candlestick(
+    x=data.index,
+    open=data["Open"],
+    high=data["High"],
+    low=data["Low"],
+    close=data["Close"]
+)])
+# Ajoute les moyennes sur le graphe
+fig.add_trace(go.Scatter(x=data.index, y=data["SMA20"], name="SMA20"))
+fig.add_trace(go.Scatter(x=data.index, y=data["SMA50"], name="SMA50"))
+st.plotly_chart(fig, use_container_width=True)
+st.subheader("Téléchargements")
+
+# CSV des données
+csv_data = data.to_csv().encode("utf-8")
+st.download_button(
+    "📥 Télécharger les données (CSV)",
+    data=csv_data,
+    file_name=f"{pair.replace('-','_')}_{interval}.csv",
+    mime="text/csv"
+)
+
+# CSV des signaux
+import io
+import pandas as pd
+signals_df = pd.DataFrame(signals, columns=["Date", "Signal"]) if signals else pd.DataFrame(columns=["Date","Signal"])
+csv_signals = signals_df.to_csv(index=False).encode("utf-8")
+st.download_button(
+    "📥 Télécharger les signaux (CSV)",
+    data=csv_signals,
+    file_name=f"{pair.replace('-','_')}_signals.csv",
+    mime="text/csv",
+    disabled=signals_df.empty
+)
+col1, col2, col3 = st.columns(3)
+with col1:
+    sma_fast = st.number_input("SMA courte", 5, 100, 20)
+with col2:
+    sma_slow = st.number_input("SMA longue", 10, 200, 50)
+with col3:
+    rsi_len = st.number_input("RSI période", 5, 50, 14)
+
+# Remplace tes calculs par :
+data[f"SMA{sma_fast}"] = data["Close"].rolling(sma_fast).mean()
+data[f"SMA{sma_slow}"] = data["Close"].rolling(sma_slow).mean()
+data[f"RSI{rsi_len}"] = rsi(data["Close"], rsi_len)
+
+# Et adapte les lignes de graphiques/colonnes :
+st.line_chart(data[["Close", f"SMA{sma_fast}", f"SMA{sma_slow}"]])
+st.line_chart(data[[f"RSI{rsi_len}"]])
