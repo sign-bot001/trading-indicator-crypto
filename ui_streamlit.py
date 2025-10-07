@@ -8,7 +8,6 @@ st.title("Crypto Trading Indicator App")
 
 st.write("Données via Yahoo Finance (yfinance) – pas de clé API, compatible Streamlit Cloud ✅")
 
-# ---- Inputs
 pair = st.text_input("Pair (format yfinance, ex: BTC-USD / ETH-USD)", "BTC-USD")
 start_date = st.date_input("Date de début", date(2024, 1, 1))
 end_date = st.date_input("Date de fin", date.today())
@@ -21,10 +20,13 @@ def load_data(symbol: str, start: date, end: date, interval: str) -> pd.DataFram
         start=start,
         end=end,
         interval=interval,
-        auto_adjust=True,   # Nettoie les prix
+        auto_adjust=True,
         progress=False
     )
-    df = df.rename(columns=str.title)  # Uniformise les colonnes : Close, Open...
+    if isinstance(df.columns, pd.MultiIndex):
+        df = df.copy()
+        df.columns = df.columns.get_level_values(0)
+    df = df.rename(columns=str.title)
     return df
 
 def rsi(series: pd.Series, period: int = 14) -> pd.Series:
@@ -45,7 +47,6 @@ if st.button("Charger les données"):
             if "Close" not in data.columns:
                 st.error(f"Colonne 'Close' non trouvée. Colonnes disponibles : {list(data.columns)}")
             else:
-                # Indicateurs techniques
                 data["SMA20"] = data["Close"].rolling(20).mean()
                 data["SMA50"] = data["Close"].rolling(50).mean()
                 data["RSI14"] = rsi(data["Close"], 14)
@@ -59,7 +60,6 @@ if st.button("Charger les données"):
                 st.subheader("RSI (14)")
                 st.line_chart(data[["RSI14"]])
 
-                # Signaux (croisements SMA20/SMA50)
                 signals = []
                 for i in range(1, len(data)):
                     a1, b1 = data["SMA20"].iloc[i-1], data["SMA50"].iloc[i-1]
