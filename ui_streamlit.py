@@ -81,11 +81,11 @@ import plotly.graph_objects as go
 
 st.subheader("Graphique en bougies")
 fig = go.Figure(data=[go.Candlestick(
-    x=data.index,
-    open=data["Open"],
-    high=data["High"],
-    low=data["Low"],
-    close=data["Close"]
+    x=df.index,
+    open=df["Open"],
+    high=df["High"],
+    low=df["Low"],
+    close=df["Close"]
 )])
 # Ajoute les moyennes sur le graphe
 fig.add_trace(go.Scatter(x=data.index, y=data["SMA20"], name="SMA20"))
